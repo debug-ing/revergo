@@ -3,5 +3,8 @@ package main
 import "fmt"
 
 func main() {
-	fmt.Println("Hello World")
+	fmt.Println("Starting the application...")
+	// Load the configuration
+
+	//
 }

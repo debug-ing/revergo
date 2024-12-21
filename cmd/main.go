@@ -3,8 +3,11 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 
 	"github.com/debug-ing/revergo/config"
+	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
@@ -15,5 +18,9 @@ func main() {
 	// Load the configuration
 	config := config.LoadConfig(*configPath)
 	fmt.Println("Configuration loaded:", len(config.Projects))
-	//
+	r := gin.Default()
+	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
+	if err := r.Run(":8090"); err != nil {
+		log.Fatal("Error starting server:", err)
+	}
 }

@@ -42,7 +42,8 @@ func (r *Reverse) Reverse() {
 			fmt.Println("Client connected from", addr)
 			//
 			// go handleTCPConnection(clientConn, project.Proxy)
-			go handleTCPConnection2(clientConn, project.Proxy)
+			// go handleTCPConnection2(clientConn, project.Proxy)
+			go handleTCPConnection(clientConn, project.Proxy)
 		}
 	}
 }
@@ -98,6 +99,62 @@ func handleTCPConnection2(clientConn net.Conn, targetAddr string) {
 	statusCode := extractHTTPStatusCode(statusLine)
 	fmt.Printf("Response Status Code: %d\n", statusCode)
 	clientConn.Write(responseBuffer[:n])
+}
+
+func handleTCPConnection(clientConn net.Conn, targetAddr string) {
+	defer clientConn.Close()
+
+	// Read client request
+	buffer := make([]byte, 4096)
+	n, err := clientConn.Read(buffer)
+	if err != nil {
+		log.Printf("Error reading client data: %v", err)
+		return
+	}
+
+	// Parse HTTP request
+	httpRequest, err := http.ReadRequest(bufio.NewReader(bytes.NewReader(buffer[:n])))
+	if err != nil {
+		log.Printf("Failed to parse HTTP request: %v", err)
+		return
+	}
+
+	// Set the target address as the Host
+	httpRequest.Host = targetAddr
+	httpRequest.RequestURI = "" // Clear the RequestURI for forwarding
+
+	// Connect to the target server
+	targetConn, err := net.Dial("tcp", targetAddr)
+	if err != nil {
+		log.Printf("Failed to connect to target server: %v", err)
+		return
+	}
+	defer targetConn.Close()
+
+	// Forward the HTTP request to the target server
+	err = httpRequest.Write(targetConn)
+	if err != nil {
+		log.Printf("Failed to forward request to target server: %v", err)
+		return
+	}
+
+	// Read the response from the target server
+	targetReader := bufio.NewReader(targetConn)
+	httpResponse, err := http.ReadResponse(targetReader, httpRequest)
+	if err != nil {
+		log.Printf("Failed to read response from target server: %v", err)
+		return
+	}
+	defer httpResponse.Body.Close()
+
+	// Write the response back to the client
+	err = httpResponse.Write(clientConn)
+	if err != nil {
+		log.Printf("Failed to forward response to client: %v", err)
+		return
+	}
+
+	fmt.Printf("Forwarded request to %s, response status: %d\n", targetAddr, httpResponse.StatusCode)
 }
 
 func parseHTTPRequestLine(requestLine string) (method, url, version string) {

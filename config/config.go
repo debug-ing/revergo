@@ -8,7 +8,9 @@ import (
 )
 
 type ProjectConfig struct {
-	Name string `mapstructure:"name"`
+	Name  string `mapstructure:"name"`
+	Port  string `mapstructure:"port"`
+	Proxy string `mapstructure:"proxy"`
 }
 
 type AppConfig struct {

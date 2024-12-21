@@ -1,11 +1,5 @@
 [[projects]]
 name = "Project A"
 hosts = ["host1.example.com", "host2.example.com"]
-port = 8080
-active = true
-
-[[projects]]
-name = "Project B"
-hosts = ["host3.example.com"]
-port = 9090
-active = false
+port = ":80"
+proxy = ":8090"

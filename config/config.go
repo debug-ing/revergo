@@ -17,9 +17,9 @@ type AppConfig struct {
 
 var once sync.Once
 
-func LoadConfig() (config *AppConfig) {
+func LoadConfig(path string) (config *AppConfig) {
 	once.Do(func() {
-		viper.SetConfigFile("config/config.toml")
+		viper.SetConfigFile(path)
 		if err := viper.ReadInConfig(); err != nil {
 			panic(err)
 		}

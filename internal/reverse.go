@@ -28,7 +28,9 @@ func (r *Reverse) Reverse() {
 		}
 		defer listener.Close()
 		for {
+			//
 
+			///
 			clientConn, err := listener.Accept()
 			if err != nil {
 				log.Printf("Failed to accept TCP connection: %v", err)
@@ -36,7 +38,7 @@ func (r *Reverse) Reverse() {
 			}
 			addr := clientConn.RemoteAddr()
 			fmt.Println("Client connected from", addr)
-			go handleConnectionDetail(clientConn, project.Proxy)
+			go handleConnectionDetail(clientConn, project.Proxy, project.Domain[0])
 		}
 	}
 }
@@ -73,7 +75,7 @@ func handleConnection(clientConn net.Conn, port string) {
 }
 
 // handleConnectionDetail this function reverse proxy with detail
-func handleConnectionDetail(clientConn net.Conn, port string) {
+func handleConnectionDetail(clientConn net.Conn, port, allowedDomain string) {
 	defer clientConn.Close()
 	backendConn, err := net.Dial("tcp", port)
 	if err != nil {
@@ -90,6 +92,22 @@ func handleConnectionDetail(clientConn net.Conn, port string) {
 		log.Printf("Failed to read HTTP request: %v", err)
 		return
 	}
+	///move to function
+	// if !strings.HasSuffix(req.Host, allowedDomain) {
+	// 	log.Printf("Connection rejected: Host %s is not allowed", req.Host)
+	// 	clientWriter.WriteString("HTTP/1.1 403 Forbidden\r\n")
+	// 	clientWriter.WriteString("Content-Type: text/plain\r\n")
+	// 	clientWriter.WriteString("Connection: close\r\n")
+	// 	clientWriter.WriteString("\r\n")
+	// 	clientWriter.WriteString("Access denied: invalid domain\r\n")
+	// 	clientWriter.Flush()
+	// 	return
+	// }
+	if !CheckHost(clientWriter, req.Host, allowedDomain) {
+		return
+	}
+
+	//
 	log.Printf("Request: Method=%s, URL=%s", req.Method, req.URL)
 	err = req.Write(backendWriter)
 	if err != nil {
@@ -109,4 +127,17 @@ func handleConnectionDetail(clientConn net.Conn, port string) {
 		return
 	}
 	clientWriter.Flush()
+}
+func CheckHost(clientWriter *bufio.Writer, host string, allowedDomain string) bool {
+	if !strings.HasSuffix(host, allowedDomain) {
+		log.Printf("Connection rejected: Host %s is not allowed", host)
+		clientWriter.WriteString("HTTP/1.1 403 Forbidden\r\n")
+		clientWriter.WriteString("Content-Type: text/plain\r\n")
+		clientWriter.WriteString("Connection: close\r\n")
+		clientWriter.WriteString("\r\n")
+		clientWriter.WriteString("Access denied: invalid domain\r\n")
+		clientWriter.Flush()
+		return false
+	}
+	return true
 }

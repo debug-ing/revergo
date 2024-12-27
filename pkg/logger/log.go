@@ -9,8 +9,6 @@ import (
 )
 
 type Log struct {
-	IP         string
-	DateTime   string
 	Method     string
 	URL        string
 	StatusCode string
@@ -58,12 +56,12 @@ func InitLogger(infoPath, errorPath string) error {
 5.160.41.78 - - [10/Oct/2024:12:18:29 +0330] "GET /DownloadCenter/index4/logo.svg HTTP/1.1" 200 2228 "https://hyperonline.shop/product/ep-7547/%DA%A9%D8%A7%D9%BE%D9%88%DA%86%DB%8C%D9%86%D9%88%20%D8%A7%DB%8C%D8%AA%D8%A7%D9%84%DB%8C%D8%A7%DB%8C%DB%8C%2025%20%DA%AF%D8%B1%D9%85%20%D9%81%D9%88%D9%84%20%DA%A9%D8%A7%D9%81%D9%87" "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Mobile Safari/537.36"
 */
 // Info logs an informational message.
-func Info(msg string, fields map[string]interface{}) {
-	event := infoLogger.Info().Str("level", "info").Timestamp()
+func Info(fields map[string]interface{}) {
+	event := infoLogger.Info()
 	for key, value := range fields {
 		event = event.Interface(key, value)
 	}
-	event.Msg(msg)
+	event.Send()
 }
 
 // TODO Template error log nginx

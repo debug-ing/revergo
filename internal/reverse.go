@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"net/http"
 	"strings"
 
 	"github.com/debug-ing/revergo/config"
@@ -35,10 +36,12 @@ func (r *Reverse) Reverse() {
 			}
 			addr := clientConn.RemoteAddr()
 			fmt.Println("Client connected from", addr)
-			go handleConnection(clientConn, project.Proxy)
+			go handleConnectionDetail(clientConn, project.Proxy)
 		}
 	}
 }
+
+// handleConnectionDetail this function reverse proxy with out log
 func handleConnection(clientConn net.Conn, port string) {
 	defer clientConn.Close()
 	backendConn, err := net.Dial("tcp", port)
@@ -67,4 +70,43 @@ func handleConnection(clientConn net.Conn, port string) {
 	}
 	go io.Copy(backendConn, clientConn)
 	io.Copy(clientConn, backendConn)
+}
+
+// handleConnectionDetail this function reverse proxy with detail
+func handleConnectionDetail(clientConn net.Conn, port string) {
+	defer clientConn.Close()
+	backendConn, err := net.Dial("tcp", port)
+	if err != nil {
+		log.Printf("Failed to connect to backend: %v", err)
+		return
+	}
+	defer backendConn.Close()
+	clientReader := bufio.NewReader(clientConn)
+	clientWriter := bufio.NewWriter(clientConn)
+	backendReader := bufio.NewReader(backendConn)
+	backendWriter := bufio.NewWriter(backendConn)
+	req, err := http.ReadRequest(clientReader)
+	if err != nil {
+		log.Printf("Failed to read HTTP request: %v", err)
+		return
+	}
+	log.Printf("Request: Method=%s, URL=%s", req.Method, req.URL)
+	err = req.Write(backendWriter)
+	if err != nil {
+		log.Printf("Failed to forward HTTP request: %v", err)
+		return
+	}
+	backendWriter.Flush()
+	resp, err := http.ReadResponse(backendReader, req)
+	if err != nil {
+		log.Printf("Failed to read HTTP response: %v", err)
+		return
+	}
+	log.Printf("Response: StatusCode=%d", resp.StatusCode)
+	err = resp.Write(clientWriter)
+	if err != nil {
+		log.Printf("Failed to forward HTTP response: %v", err)
+		return
+	}
+	clientWriter.Flush()
 }

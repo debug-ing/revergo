@@ -1,3 +1,4 @@
+---
 project_name: revergo
 builds:
   - main: ./cmd/main.go

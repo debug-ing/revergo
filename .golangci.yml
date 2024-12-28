@@ -14,6 +14,7 @@ linters:
     - unconvert
     - goconst
     - gocyclo
+    - revive
     # - gochecknoglobals # ignore because i have global variables
 
 linters-settings:

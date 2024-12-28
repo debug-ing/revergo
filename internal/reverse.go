@@ -104,7 +104,7 @@ func (r *Reverse) handleConnectionDetail(clientConn net.Conn, port, allowedDomai
 	// 	clientWriter.Flush()
 	// 	return
 	// }
-	if !r.checkHost(clientWriter, req.Host, allowedDomain) {
+	if !r.checkHost(req.Host, allowedDomain) {
 		return
 	}
 
@@ -131,7 +131,8 @@ func (r *Reverse) handleConnectionDetail(clientConn net.Conn, port, allowedDomai
 }
 
 // checkHost this function check host
-func (r *Reverse) checkHost(clientWriter *bufio.Writer, host string, allowedDomain string) bool {
+// TODO clientWriter *bufio.Writer is not used removed
+func (r *Reverse) checkHost(host string, allowedDomain string) bool {
 	return strings.HasSuffix(host, allowedDomain)
 	// TODO old code
 	// if !strings.HasSuffix(host, allowedDomain) {

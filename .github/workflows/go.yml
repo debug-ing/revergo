@@ -1,16 +1,7 @@
 name: Go CI
 
 on:
-  push:
-    branches:
-      - master
-  pull_request:
-    branches:
-      - master
-
-permissions:
-  contents: write
-
+  - push
 jobs:
   lint:
     name: lint

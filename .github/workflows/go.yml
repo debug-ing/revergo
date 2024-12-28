@@ -48,8 +48,6 @@ jobs:
           go-version-file: "go.mod"
       - name: Install golint
         run: go install golang.org/x/lint/golint@latest
-      - name: Install dependencies
-        run: go mod tidy  
       # - name: Go format check
       #   run: go fmt ./...
     

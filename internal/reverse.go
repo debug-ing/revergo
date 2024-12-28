@@ -3,7 +3,6 @@ package internal
 import (
 	"bufio"
 	"fmt"
-	"io"
 	"log"
 	"net"
 	"net/http"
@@ -13,14 +12,17 @@ import (
 	"github.com/debug-ing/revergo/pkg/logger"
 )
 
+// Reverse struct
 type Reverse struct {
 	config *config.AppConfig
 }
 
+// NewReverse this function create new reverse
 func NewReverse(config *config.AppConfig) *Reverse {
 	return &Reverse{config: config}
 }
 
+// Reverse this function reverse proxy
 func (r *Reverse) Reverse() {
 	for _, project := range r.config.Projects {
 		listener, err := net.Listen("tcp", project.Port)
@@ -41,36 +43,37 @@ func (r *Reverse) Reverse() {
 	}
 }
 
+// @Deprecated
 // handleConnection this function reverse proxy with out log
-func (r *Reverse) handleConnection(clientConn net.Conn, port string) {
-	defer clientConn.Close()
-	backendConn, err := net.Dial("tcp", port)
-	if err != nil {
-		return
-	}
-	defer backendConn.Close()
-	clientReader := bufio.NewReader(clientConn)
-	backendWriter := bufio.NewWriter(backendConn)
-	for {
-		line, err := clientReader.ReadString('\n')
-		if err != nil {
-			return
-		}
-		if line == "\r\n" {
-			backendWriter.WriteString(line)
-			backendWriter.Flush()
-			break
-		}
-		if strings.HasPrefix(line, "Host:") {
-			line = fmt.Sprintf("Host: %s\r\n", port)
-		}
+// func (r *Reverse) handleConnection(clientConn net.Conn, port string) {
+// 	defer clientConn.Close()
+// 	backendConn, err := net.Dial("tcp", port)
+// 	if err != nil {
+// 		return
+// 	}
+// 	defer backendConn.Close()
+// 	clientReader := bufio.NewReader(clientConn)
+// 	backendWriter := bufio.NewWriter(backendConn)
+// 	for {
+// 		line, err := clientReader.ReadString('\n')
+// 		if err != nil {
+// 			return
+// 		}
+// 		if line == "\r\n" {
+// 			backendWriter.WriteString(line)
+// 			backendWriter.Flush()
+// 			break
+// 		}
+// 		if strings.HasPrefix(line, "Host:") {
+// 			line = fmt.Sprintf("Host: %s\r\n", port)
+// 		}
 
-		backendWriter.WriteString(line)
-		backendWriter.Flush()
-	}
-	go io.Copy(backendConn, clientConn)
-	io.Copy(clientConn, backendConn)
-}
+// 		backendWriter.WriteString(line)
+// 		backendWriter.Flush()
+// 	}
+// 	go io.Copy(backendConn, clientConn)
+// 	io.Copy(clientConn, backendConn)
+// }
 
 // handleConnectionDetail this function reverse proxy with detail
 func (r *Reverse) handleConnectionDetail(clientConn net.Conn, port, allowedDomain string) {
@@ -101,9 +104,10 @@ func (r *Reverse) handleConnectionDetail(clientConn net.Conn, port, allowedDomai
 	// 	clientWriter.Flush()
 	// 	return
 	// }
-	//if !r.checkHost(clientWriter, req.Host, allowedDomain) {
-	//	return
-	//}
+	if !r.checkHost(clientWriter, req.Host, allowedDomain) {
+		return
+	}
+
 	log.Printf("Request: Method=%s, URL=%s", req.Method, req.URL)
 	err = req.Write(backendWriter)
 	if err != nil {
@@ -128,17 +132,19 @@ func (r *Reverse) handleConnectionDetail(clientConn net.Conn, port, allowedDomai
 
 // checkHost this function check host
 func (r *Reverse) checkHost(clientWriter *bufio.Writer, host string, allowedDomain string) bool {
-	if !strings.HasSuffix(host, allowedDomain) {
-		log.Printf("Connection rejected: Host %s is not allowed", host)
-		clientWriter.WriteString("HTTP/1.1 403 Forbidden\r\n")
-		clientWriter.WriteString("Content-Type: text/plain\r\n")
-		clientWriter.WriteString("Connection: close\r\n")
-		clientWriter.WriteString("\r\n")
-		clientWriter.WriteString("Access denied: invalid domain\r\n")
-		clientWriter.Flush()
-		return false
-	}
-	return true
+	return strings.HasSuffix(host, allowedDomain)
+	// TODO old code
+	// if !strings.HasSuffix(host, allowedDomain) {
+	// 	return false
+	// }
+	// // log.Printf("Connection rejected: Host %s is not allowed", host)
+	// // clientWriter.WriteString("HTTP/1.1 403 Forbidden\r\n")
+	// // clientWriter.WriteString("Content-Type: text/plain\r\n")
+	// // clientWriter.WriteString("Connection: close\r\n")
+	// // clientWriter.WriteString("\r\n")
+	// // clientWriter.WriteString("Access denied: invalid domain\r\n")
+	// // clientWriter.Flush()
+	// return true
 }
 
 // addLog this function add log file

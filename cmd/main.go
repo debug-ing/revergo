@@ -22,14 +22,17 @@ func main() {
 	// Start the reverse proxy
 	reverse := internal.NewReverse(config)
 	go reverse.Reverse()
-	//init log
+	// Init log
 	initLog()
 	// Start gin server for monitoring...
 	router()
 }
 
 func initLog() {
-	logger.InitLogger("log/info.log", "log/error.log")
+	err := logger.InitLogger("log/info.log", "log/error.log")
+	if err != nil {
+		log.Fatal("Error initializing loggers:", err)
+	}
 }
 
 func router() {

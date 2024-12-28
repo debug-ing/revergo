@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/viper"
 )
 
+// ProjectConfig holds the configuration settings for a single project.
 type ProjectConfig struct {
 	Name   string   `mapstructure:"name"`
 	Port   string   `mapstructure:"port"`
@@ -14,12 +15,14 @@ type ProjectConfig struct {
 	Domain []string `mapstructure:"domain"`
 }
 
+// AppConfig holds the configuration for the entire application, including multiple projects.
 type AppConfig struct {
 	Projects []ProjectConfig `mapstructure:"projects"`
 }
 
 var once sync.Once
 
+// LoadConfig loads the application configuration from the specified path.
 func LoadConfig(path string) (config *AppConfig) {
 	once.Do(func() {
 		viper.SetConfigFile(path)

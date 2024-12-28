@@ -67,7 +67,7 @@ jobs:
       # Autobuild is failed, so it is replaced by the following stages.
       - uses: actions/checkout@v4
       - uses: extractions/setup-just@v2
-      - run: just build
+      - run: make build
         name: Autobuild
 
       - name: Perform CodeQL Analysis
